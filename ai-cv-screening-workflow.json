@@ -1,0 +1,359 @@
+{
+  "name": "AI CV Screening Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "44311256-f7b0-42d0-a41c-f330acd15133",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        1104,
+        1056
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Application Form').item.json['E-mail'] }}",
+        "subject": "We Have Received Your CV",
+        "message": "=Dear {{ $('Application Form').item.json['Full Name'] }}, \n\nThank you for submitting your CV. We have received it and will review it shortly. \n\nBest regards,\nHR Team",
+        "options": {}
+      },
+      "id": "74c2867c-ebdf-4c86-8b1c-71f39f5dbe1d",
+      "name": "Confirmation of CV Submission",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1680,
+        944
+      ],
+      "webhookId": "954756dc-2946-4b78-b208-06f3df612ab5",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_HR_EMAIL@example.com",
+        "subject": "New Candidate CV Awaiting Review",
+        "message": "=Hello HR,\n\nA new CV has been successfully received in our system. Please review the candidate's details at your earliest convenience.\n\nCandidate Name: {{ $('Application Form').item.json['Full Name'] }}\nCandidate E-mail: {{ $('Application Form').item.json['E-mail'] }}\nCandidate Linkedin: {{ $('Application Form').item.json.Linkedin }}\nCandidate Expectation: {{ $('Application Form').item.json.Expectation }}\nCandidate AI Rating: {{ $('Using AI Analysis & Rating').item.json.text }}\n\nThank you for your attention.\n\nBest regards,\nAutomated CV Screening",
+        "options": {}
+      },
+      "id": "da8836d0-a43b-48f6-a5d5-d27f48f53e85",
+      "name": "Inform HR New CV Received",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1472,
+        736
+      ],
+      "webhookId": "e969a9f5-631b-4719-a4f6-87e6063cef6a",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Rule 1: Do not exceed a maximum of 75 words. As an AI with advanced capabilities in talent acquisition and human resources, your task is to conduct a thorough analysis of a candidate's resume against a specific job description. Assist hiring professionals in discerning the alignment between the candidate's skills, experience, and qualifications versus the job requirements. Structure your analysis as follows: 1. Compatibility Rating: Provide an overall compatibility rating from 1 (not compatible) to 10 (perfect fit), with brief rationale. 2. Recommendation: State whether the employer should consider this candidate for an interview, with a short justification. Job description: \"Software Engineer\". Resume: ${resume}. Respond in plain text only, no markdown, no asterisks."
+            }
+          ]
+        }
+      },
+      "id": "ff6d9d64-e281-415a-9ba3-2f93ec23ea69",
+      "name": "Using AI Analysis & Rating",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        1040,
+        784
+      ],
+      "typeVersion": 1.5
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "Your_Resume_CV",
+        "options": {}
+      },
+      "id": "3990e628-1450-4dc7-a86a-68d189b9fca7",
+      "name": "Convert Binary to Json",
+      "type": "n8n-nodes-base.extractFromFile",
+      "position": [
+        800,
+        768
+      ],
+      "retryOnFail": false,
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "formTitle": "Application for Software Engineer Position",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "E-mail",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Expectation",
+              "placeholder": "2000-3000$",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Linkedin",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Your Resume/CV",
+              "fieldType": "file",
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "264c22b5-16a4-46b0-a05f-b760bb0c94ed",
+      "name": "Application Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "position": [
+        544,
+        928
+      ],
+      "webhookId": "4fccbbaa-40a8-4bae-911b-a6c55a8a655f",
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "CV of Software Engineers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "columns": {
+          "value": {
+            "CV": "={{ $('Application Form').item.json['Your Resume/CV'][0].filename }}",
+            "E-mail": "={{ $('Application Form').item.json['E-mail'] }}",
+            "Linkedin": "={{ $('Application Form').item.json.Linkedin }}",
+            "AI Rating": "={{ $json.text }}",
+            "Full Name": "={{ $('Application Form').item.json['Full Name'] }}",
+            "Expectation": "={{ $('Application Form').item.json.Expectation }}"
+          },
+          "schema": [
+            {
+              "id": "CV",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "CV",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Full Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "E-mail",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "E-mail",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expectation",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Expectation",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Linkedin",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Linkedin",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Rating",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "AI Rating",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "85996a19-d653-4339-bdf6-7ac9e2aacaab",
+      "name": "Candidate Lists",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1264,
+        1024
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        928,
+        1056
+      ],
+      "id": "70f467d9-cd47-4c9b-bd82-fccfde8f093b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Candidate Lists": {
+      "main": [
+        [
+          {
+            "node": "Inform HR New CV Received",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Application Form": {
+      "main": [
+        [
+          {
+            "node": "Convert Binary to Json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Binary to Json": {
+      "main": [
+        [
+          {
+            "node": "Using AI Analysis & Rating",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Inform HR New CV Received": {
+      "main": [
+        [
+          {
+            "node": "Confirmation of CV Submission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Using AI Analysis & Rating": {
+      "main": [
+        [
+          {
+            "node": "Candidate Lists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Using AI Analysis & Rating",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "67d8a2ac-6df7-41a7-ad6b-2d71d887c2ea",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "REDACTED"
+  },
+  "nodeGroups": [],
+  "id": "zNKPmHPuYRP3xDxX",
+  "tags": []
+}
